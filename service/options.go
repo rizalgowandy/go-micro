@@ -4,14 +4,14 @@ import (
 	"context"
 	"time"
 
-	"github.com/asim/go-micro/v3/broker"
-	"github.com/asim/go-micro/v3/broker/http"
-	"github.com/asim/go-micro/v3/client"
-	mucpClient "github.com/asim/go-micro/v3/client/mucp"
-	"github.com/asim/go-micro/v3/registry"
-	"github.com/asim/go-micro/v3/registry/memory"
-	"github.com/asim/go-micro/v3/server"
-	mucpServer "github.com/asim/go-micro/v3/server/mucp"
+	"github.com/asim/nitro/v3/broker"
+	mbroker "github.com/asim/nitro/v3/broker/memory"
+	"github.com/asim/nitro/v3/client"
+	mucpClient "github.com/asim/nitro/v3/client/mucp"
+	"github.com/asim/nitro/v3/registry"
+	"github.com/asim/nitro/v3/registry/memory"
+	"github.com/asim/nitro/v3/server"
+	mucpServer "github.com/asim/nitro/v3/server/mucp"
 )
 
 type Options struct {
@@ -35,7 +35,7 @@ type Option func(*Options)
 
 func NewOptions(opts ...Option) Options {
 	opt := Options{
-		Broker:   http.NewBroker(),
+		Broker:   mbroker.NewBroker(),
 		Client:   mucpClient.NewClient(),
 		Server:   mucpServer.NewServer(),
 		Registry: memory.NewRegistry(),

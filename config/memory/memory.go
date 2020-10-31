@@ -1,20 +1,20 @@
-package config
+package memory
 
 import (
 	"bytes"
 	"sync"
 	"time"
 
-	"github.com/asim/go-micro/v3/config/loader"
-	"github.com/asim/go-micro/v3/config/loader/memory"
-	"github.com/asim/go-micro/v3/config/reader"
-	"github.com/asim/go-micro/v3/config/reader/json"
-	"github.com/asim/go-micro/v3/config/source"
+	"github.com/asim/nitro/v3/config"
+	"github.com/asim/nitro/v3/config/loader"
+	"github.com/asim/nitro/v3/config/loader/memory"
+	"github.com/asim/nitro/v3/config/reader"
+	"github.com/asim/nitro/v3/config/reader/json"
 )
 
-type config struct {
+type memoryConfig struct {
 	exit chan bool
-	opts Options
+	opts config.Options
 
 	sync.RWMutex
 	// the current snapshot
@@ -30,8 +30,8 @@ type watcher struct {
 	value reader.Value
 }
 
-func newConfig(opts ...Option) (Config, error) {
-	var c config
+func NewConfig(opts ...config.Option) (config.Config, error) {
+	var c memoryConfig
 
 	if err := c.Init(opts...); err != nil {
 		return nil, err
@@ -41,8 +41,8 @@ func newConfig(opts ...Option) (Config, error) {
 	return &c, nil
 }
 
-func (c *config) Init(opts ...Option) error {
-	c.opts = Options{
+func (c *memoryConfig) Init(opts ...config.Option) error {
+	c.opts = config.Options{
 		Reader: json.NewReader(),
 	}
 	c.exit = make(chan bool)
@@ -73,11 +73,11 @@ func (c *config) Init(opts ...Option) error {
 	return nil
 }
 
-func (c *config) Options() Options {
+func (c *memoryConfig) Options() config.Options {
 	return c.opts
 }
 
-func (c *config) run() {
+func (c *memoryConfig) run() {
 	watch := func(w loader.Watcher) error {
 		for {
 			// get changeset
@@ -139,20 +139,8 @@ func (c *config) run() {
 	}
 }
 
-func (c *config) Map() map[string]interface{} {
-	c.RLock()
-	defer c.RUnlock()
-	return c.vals.Map()
-}
-
-func (c *config) Scan(v interface{}) error {
-	c.RLock()
-	defer c.RUnlock()
-	return c.vals.Scan(v)
-}
-
 // sync loads all the sources, calls the parser and updates the config
-func (c *config) Sync() error {
+func (c *memoryConfig) Sync() error {
 	if err := c.opts.Loader.Sync(); err != nil {
 		return err
 	}
@@ -175,7 +163,7 @@ func (c *config) Sync() error {
 	return nil
 }
 
-func (c *config) Close() error {
+func (c *memoryConfig) Close() error {
 	select {
 	case <-c.exit:
 		return nil
@@ -185,7 +173,7 @@ func (c *config) Close() error {
 	return nil
 }
 
-func (c *config) Get(path ...string) reader.Value {
+func (c *memoryConfig) Get(path ...string) reader.Value {
 	c.RLock()
 	defer c.RUnlock()
 
@@ -198,63 +186,11 @@ func (c *config) Get(path ...string) reader.Value {
 	return newValue()
 }
 
-func (c *config) Set(val interface{}, path ...string) {
-	c.Lock()
-	defer c.Unlock()
-
-	if c.vals != nil {
-		c.vals.Set(val, path...)
-	}
-
-	return
+func (c *memoryConfig) Load(path ...string) (reader.Value, error) {
+	return c.Get(path...), nil
 }
 
-func (c *config) Del(path ...string) {
-	c.Lock()
-	defer c.Unlock()
-
-	if c.vals != nil {
-		c.vals.Del(path...)
-	}
-
-	return
-}
-
-func (c *config) Bytes() []byte {
-	c.RLock()
-	defer c.RUnlock()
-
-	if c.vals == nil {
-		return []byte{}
-	}
-
-	return c.vals.Bytes()
-}
-
-func (c *config) Load(sources ...source.Source) error {
-	if err := c.opts.Loader.Load(sources...); err != nil {
-		return err
-	}
-
-	snap, err := c.opts.Loader.Snapshot()
-	if err != nil {
-		return err
-	}
-
-	c.Lock()
-	defer c.Unlock()
-
-	c.snap = snap
-	vals, err := c.opts.Reader.Values(snap.ChangeSet)
-	if err != nil {
-		return err
-	}
-	c.vals = vals
-
-	return nil
-}
-
-func (c *config) Watch(path ...string) (Watcher, error) {
+func (c *memoryConfig) Watch(path ...string) (config.Watcher, error) {
 	value := c.Get(path...)
 
 	w, err := c.opts.Loader.Watch(path...)
@@ -270,8 +206,8 @@ func (c *config) Watch(path ...string) (Watcher, error) {
 	}, nil
 }
 
-func (c *config) String() string {
-	return "config"
+func (c *memoryConfig) String() string {
+	return "memory"
 }
 
 func (w *watcher) Next() (reader.Value, error) {

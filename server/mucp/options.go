@@ -1,11 +1,11 @@
 package mucp
 
 import (
-	"github.com/asim/go-micro/v3/broker/http"
-	"github.com/asim/go-micro/v3/codec"
-	"github.com/asim/go-micro/v3/registry/memory"
-	"github.com/asim/go-micro/v3/server"
-	thttp "github.com/asim/go-micro/v3/transport/http"
+	mbroker "github.com/asim/nitro/v3/broker/memory"
+	"github.com/asim/nitro/v3/codec"
+	"github.com/asim/nitro/v3/registry/memory"
+	"github.com/asim/nitro/v3/server"
+	tmem "github.com/asim/nitro/v3/transport/memory"
 )
 
 func newOptions(opt ...server.Option) server.Options {
@@ -21,7 +21,7 @@ func newOptions(opt ...server.Option) server.Options {
 	}
 
 	if opts.Broker == nil {
-		opts.Broker = http.NewBroker()
+		opts.Broker = mbroker.NewBroker()
 	}
 
 	if opts.Registry == nil {
@@ -29,7 +29,7 @@ func newOptions(opt ...server.Option) server.Options {
 	}
 
 	if opts.Transport == nil {
-		opts.Transport = thttp.NewTransport()
+		opts.Transport = tmem.NewTransport()
 	}
 
 	if opts.RegisterCheck == nil {

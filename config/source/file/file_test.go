@@ -7,8 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/asim/go-micro/v3/config"
-	"github.com/asim/go-micro/v3/config/source/file"
+	"github.com/asim/nitro/v3/config"
+	"github.com/asim/nitro/v3/config/memory"
+	"github.com/asim/nitro/v3/config/source/file"
 )
 
 func TestConfig(t *testing.T) {
@@ -27,11 +28,11 @@ func TestConfig(t *testing.T) {
 		t.Error(err)
 	}
 
-	conf, err := config.NewConfig()
+	conf, err := memory.NewConfig()
 	if err != nil {
 		t.Fatal(err)
 	}
-	conf.Load(file.NewSource(file.WithPath(path)))
+	conf.Init(config.WithSource(file.NewSource(file.WithPath(path))))
 	// simulate multiple close
 	go conf.Close()
 	go conf.Close()
